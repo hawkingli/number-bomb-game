@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>DIGIT MATCH — Web Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07071a;
+  --card: #0e0e2a;
+  --primary: #7c3aed;
+  --accent: #f59e0b;
+  --text: #e2e8f0;
+  --sub: #8b8fad;
+  --glow: rgba(124,58,237,0.4);
+  --danger: #ef4444;
+}
+*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ─── Background ─── */
+.bg-grid {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: linear-gradient(var(--primary)06 1px, transparent 1px),
+    linear-gradient(90deg, var(--primary)06 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+.bg-radial {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(ellipse at 50% 15%, var(--primary)22 0%, transparent 65%);
+}
+
+/* ─── Layout ─── */
+.app {
+  position: relative; z-index: 1;
+  min-height: 100dvh;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 0 16px env(safe-area-inset-bottom, 24px);
+}
+.panel {
+  width: 100%; max-width: 500px;
+  padding-top: max(env(safe-area-inset-top, 20px), 20px);
+  padding-bottom: 40px;
+}
+
+/* ─── Animations ─── */
+@keyframes blink { 0%,100%{opacity:.3}50%{opacity:1} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} }
+@keyframes successFlash { 0%{opacity:0;transform:scale(.5)} 30%{opacity:1;transform:scale(1.15)} 60%{transform:scale(.95)} 80%{transform:scale(1.05)} 100%{opacity:1;transform:scale(1)} }
+@keyframes failShake { 0%,100%{transform:translateX(0) rotate(0deg)} 15%{transform:translateX(-12px) rotate(-3deg)} 30%{transform:translateX(12px) rotate(3deg)} 45%{transform:translateX(-10px) rotate(-2deg)} 60%{transform:translateX(10px) rotate(2deg)} 75%{transform:translateX(-6px)} }
+@keyframes winRing { 0%{transform:scale(.8);opacity:0} 50%{opacity:1} 100%{transform:scale(2.2);opacity:0} }
+@keyframes laserSpin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes laserSpinRev { from{transform:rotate(360deg)} to{transform:rotate(0deg)} }
+@keyframes laserPulse { 0%,100%{opacity:.6;transform:scaleX(1)} 50%{opacity:1;transform:scaleX(1.05)} }
+@keyframes iconFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+@keyframes particleFly { 0%{opacity:1;transform:scale(1) translateY(0)} 100%{opacity:0;transform:scale(.3) translateY(-120px)} }
+@keyframes titlePulse { 0%,100%{color:var(--primary);text-shadow:0 0 32px var(--glow),0 0 60px var(--glow)} 50%{color:var(--accent);text-shadow:0 0 32px rgba(245,158,11,.7),0 0 60px rgba(245,158,11,.4)} }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes gdPulse { 0%,100%{box-shadow:0 0 0 0 rgba(66,133,244,.4)} 50%{box-shadow:0 0 0 8px rgba(66,133,244,0)} }
+@keyframes slideIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+@keyframes countUp { from{opacity:0;transform:translateY(20px) scale(.8)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+/* ─── Title ─── */
+.title-wrapper {
+  position: relative; display: inline-block;
+  padding: 18px 28px; margin-bottom: 10px; text-align: center;
+}
+.title-ring { position: absolute; border-radius: 22px; }
+.title-ring-1 { inset: -3px; border: 2px solid var(--primary); opacity:.7; animation: laserPulse 2s ease-in-out infinite; }
+.title-ring-2 { inset: -9px; border: 1.5px dashed var(--primary); opacity:.45; border-radius: 28px; animation: laserSpin 6s linear infinite; }
+.title-ring-3 { inset: -15px; border: 1px dashed var(--accent); opacity:.3; border-radius: 34px; animation: laserSpinRev 9s linear infinite; }
+.title-corner {
+  position: absolute; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent), 0 0 20px rgba(245,158,11,.5);
+  animation: blink .9s ease-in-out infinite;
+}
+.title-text {
+  font-family: 'Syne', sans-serif; font-size: 40px; font-weight: 800;
+  letter-spacing: .06em; text-transform: uppercase; line-height: 1.05;
+  animation: titlePulse 3s ease-in-out infinite;
+}
+.game-icon {
+  width: 88px; height: 88px; border-radius: 22px; object-fit: cover;
+  box-shadow: 0 0 24px var(--glow), 0 0 48px rgba(124,58,237,.25);
+  border: 2px solid var(--primary);
+  animation: iconFloat 3s ease-in-out infinite;
+}
+.subtitle {
+  font-size: 13px; letter-spacing: .14em; color: var(--sub);
+  font-style: italic; animation: blink 2.5s ease-in-out infinite;
+}
+
+/* ─── Buttons ─── */
+.btn-primary {
+  width: 100%; padding: 18px 0;
+  background: linear-gradient(135deg, var(--primary), rgba(124,58,237,.8));
+  border: none; border-radius: 18px; color: #fff;
+  font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; cursor: pointer;
+  box-shadow: 0 4px 24px var(--glow); transition: opacity .15s;
+  min-height: 58px;
+}
+.btn-primary:active { opacity: .75; }
+.btn-primary.accent { background: linear-gradient(135deg, var(--accent), rgba(245,158,11,.8)); box-shadow: 0 4px 24px rgba(245,158,11,.4); }
+.btn-primary.danger { background: linear-gradient(135deg, var(--danger), rgba(239,68,68,.8)); box-shadow: 0 4px 24px rgba(239,68,68,.35); }
+
+.btn-back {
+  padding: 10px 20px; font-size: 13px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; background: rgba(124,58,237,.12);
+  border: 1px solid rgba(124,58,237,.3); border-radius: 12px; color: var(--sub);
+  cursor: pointer; font-family: inherit; min-height: 44px; min-width: 80px;
+  transition: all .2s;
+}
+.btn-back:hover { border-color: var(--primary); color: var(--text); }
+
+.btn-toggle {
+  flex: 1; padding: 14px 8px; border-radius: 16px; border: 1.5px solid rgba(124,58,237,.3);
+  background: transparent; color: var(--sub); font-size: 13px; font-weight: 700;
+  letter-spacing: .06em; cursor: pointer; font-family: inherit;
+  transition: all .2s; min-height: 52px;
+}
+.btn-toggle.active {
+  border: 2px solid var(--primary); background: rgba(124,58,237,.2); color: var(--primary);
+}
+.btn-toggle.small { padding: 12px 8px; border-radius: 14px; min-height: 48px; }
+
+/* ─── Input ─── */
+.guess-input {
+  width: 100%; background: rgba(124,58,237,.1);
+  border: 2px solid rgba(124,58,237,.4); border-radius: 18px;
+  padding: 20px 24px; font-family: 'JetBrains Mono', monospace;
+  font-size: 38px; font-weight: 700; color: var(--text);
+  outline: none; text-align: center; letter-spacing: .12em;
+  min-height: 80px; -webkit-appearance: none; appearance: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.guess-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(124,58,237,.2); }
+.guess-input.shaking { animation: shake .4s ease; }
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+input[type=range] { -webkit-appearance: none; height: 5px; border-radius: 5px; outline: none; cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); box-shadow: 0 2px 12px rgba(245,158,11,.6); cursor: pointer; }
+
+/* ─── Cards ─── */
+.card {
+  background: rgba(124,58,237,.08); border: 1px solid rgba(124,58,237,.2);
+  border-radius: 18px; padding: 16px 18px; margin-bottom: 16px;
+}
+.info-card {
+  background: rgba(124,58,237,.07); border: 1px solid rgba(124,58,237,.18);
+  border-radius: 16px; padding: 14px 16px; font-size: 13.5px;
+  color: var(--sub); line-height: 1.7;
+}
+
+/* ─── Label ─── */
+.label {
+  display: block; font-size: 12px; font-weight: 700; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--sub); margin-bottom: 10px;
+}
+
+/* ─── Digit Cell ─── */
+.digit-cell {
+  width: 52px; height: 58px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 800;
+  border: 2px solid rgba(124,58,237,.25); background: rgba(124,58,237,.1);
+  color: var(--text); transition: all .3s ease;
+}
+.digit-cell.matched {
+  background: rgba(245,158,11,.2); border-color: rgba(245,158,11,.6);
+  color: var(--accent); box-shadow: 0 0 16px rgba(245,158,11,.45);
+}
+
+/* ─── Attempt Row ─── */
+.attempt-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 0; border-bottom: 1px solid rgba(124,58,237,.1);
+}
+.attempt-num {
+  display: flex; gap: 3px; flex: 1;
+}
+.attempt-cell {
+  width: 36px; height: 40px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 800;
+  background: rgba(124,58,237,.1); border: 1.5px solid rgba(124,58,237,.25);
+  color: rgba(226,232,240,.7); transition: all .3s;
+}
+.attempt-cell.matched {
+  background: rgba(245,158,11,.2); border-color: rgba(245,158,11,.55);
+  color: var(--accent);
+}
+.match-badge {
+  min-width: 44px; text-align: right; font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 800; padding: 3px 8px; border-radius: 8px;
+  background: rgba(124,58,237,.15); color: var(--sub);
+  border: 1px solid rgba(124,58,237,.2);
+}
+.match-badge.full {
+  background: rgba(245,158,11,.25); color: var(--accent); border-color: rgba(245,158,11,.45);
+}
+
+/* ─── Player Panel ─── */
+.player-panel {
+  background: rgba(124,58,237,.06); border: 1.5px solid rgba(124,58,237,.18);
+  border-radius: 20px; padding: 14px 14px; flex: 1; min-width: 0;
+  transition: all .3s;
+}
+.player-panel.active {
+  background: rgba(124,58,237,.14); border-color: rgba(124,58,237,.55);
+  box-shadow: 0 0 24px rgba(124,58,237,.25);
+}
+.player-panel-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+}
+.player-name {
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase;
+}
+.progress-bar-track {
+  height: 3px; background: rgba(124,58,237,.15); border-radius: 3px;
+  margin-bottom: 10px; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; border-radius: 3px; transition: width .4s, background .4s;
+}
+.attempts-scroll { max-height: 180px; overflow-y: auto; }
+.empty-state {
+  text-align: center; color: var(--sub); font-size: 12px; padding: 14px 0; opacity: .6;
+}
+
+/* ─── Theme Buttons ─── */
+.theme-btn {
+  flex: 1; padding: 10px 6px; border-radius: 14px;
+  border: 1.5px solid rgba(124,58,237,.3); background: transparent;
+  color: var(--primary); font-size: 12px; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
+  font-family: inherit; transition: all .2s; min-height: 46px;
+}
+
+/* ─── Google Drive ─── */
+.gd-bar {
+  background: linear-gradient(135deg, rgba(26,35,126,.8), rgba(13,71,161,.6));
+  border: 1px solid rgba(66,133,244,.35); border-radius: 18px;
+  padding: 14px 16px; margin-bottom: 20px; animation: slideIn .4s ease;
+}
+.gd-connected {
+  background: linear-gradient(135deg, rgba(0,100,60,.6), rgba(0,128,76,.4));
+  border-color: rgba(52,211,153,.45);
+}
+.gd-status-dot {
+  width: 10px; height: 10px; border-radius: 50%; background: #ef4444;
+  animation: blink 1.5s ease-in-out infinite;
+}
+.gd-status-dot.connected { background: #34d399; animation: none; }
+.gd-btn {
+  padding: 8px 14px; font-size: 12px; font-weight: 700; letter-spacing: .08em;
+  border: 1px solid rgba(66,133,244,.6); border-radius: 10px; cursor: pointer;
+  background: rgba(66,133,244,.2); color: #93c5fd;
+  font-family: inherit; transition: all .2s;
+}
+.gd-btn:hover { background: rgba(66,133,244,.35); }
+.gd-btn.green { border-color: rgba(52,211,153,.5); color: #34d399; background: rgba(52,211,153,.1); }
+.gd-btn.save { animation: gdPulse 2s ease infinite; }
+
+/* ─── Leaderboard ─── */
+.lb-entry {
+  display: flex; align-items: center; gap: 12px; padding: 11px 14px;
+  border-radius: 14px; margin-bottom: 8px; animation: slideIn .3s ease both;
+  background: rgba(124,58,237,.07); border: 1px solid rgba(124,58,237,.15);
+}
+.lb-rank { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; min-width: 28px; }
+.lb-info { flex: 1; }
+.lb-name { font-weight: 700; font-size: 15px; }
+.lb-meta { font-size: 12px; color: var(--sub); margin-top: 1px; }
+.lb-score {
+  font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 22px;
+  color: var(--accent);
+}
+
+/* ─── Notification ─── */
+#notification {
+  position: fixed; top: max(env(safe-area-inset-top,20px),20px); right: 16px;
+  z-index: 9999; background: rgba(14,14,42,.95); border-radius: 16px;
+  padding: 14px 18px; max-width: 300px; font-size: 14px; font-weight: 600;
+  border: 1px solid rgba(124,58,237,.4); box-shadow: 0 8px 32px rgba(0,0,0,.6);
+  opacity: 0; transform: translateY(-20px); transition: all .3s ease;
+  pointer-events: none; display: flex; align-items: center; gap: 10px;
+}
+#notification.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+#notification.success { border-color: rgba(52,211,153,.55); }
+#notification.error { border-color: rgba(239,68,68,.55); }
+
+/* ─── Particles ─── */
+.particle {
+  position: fixed; width: 10px; height: 10px; border-radius: 50%;
+  pointer-events: none; z-index: 9998;
+  animation: particleFly 1.4s ease-out forwards;
+}
+
+/* ─── Util ─── */
+.flex { display: flex; }
+.gap-10 { gap: 10px; }
+.gap-12 { gap: 12px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-20 { margin-bottom: 20px; }
+.mb-24 { margin-bottom: 24px; }
+.text-center { text-align: center; }
+.fade-in { animation: fadeUp .4s ease; }
+.hidden { display: none !important; }
+.loader { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: rgba(124,58,237,.4); border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-radial"></div>
+
+<!-- Notification -->
+<div id="notification"></div>
+
+<!-- App -->
+<div class="app">
+<div class="panel" id="panel">
+  <!-- ════════════════ SCREEN: HOME ════════════════ -->
+  <div id="screen-home" class="fade-in">
+    <!-- Title -->
+    <div class="text-center mb-20">
+      <div class="title-wrapper">
+        <div class="title-ring title-ring-1"></div>
+        <div class="title-ring title-ring-2"></div>
+        <div class="title-ring title-ring-3"></div>
+        <div class="title-corner" style="top:-6px;left:-6px"></div>
+        <div class="title-corner" style="top:-6px;right:-6px;animation-delay:.2s"></div>
+        <div class="title-corner" style="bottom:-6px;left:-6px;animation-delay:.4s"></div>
+        <div class="title-corner" style="bottom:-6px;right:-6px;animation-delay:.6s"></div>
+        <div class="title-text">DIGIT<br>MATCH</div>
+      </div>
+      <div class="flex" style="justify-content:center;margin-bottom:8px;margin-top:12px">
+        <div style="width:88px;height:88px;border-radius:22px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:44px;animation:iconFloat 3s ease-in-out infinite;box-shadow:0 0 24px var(--glow);">🔢</div>
+      </div>
+      <div class="subtitle">Can you figure out the secret number?</div>
+    </div>
+
+    <!-- Google Drive Bar -->
+    <div class="gd-bar mb-20" id="gd-bar">
+      <div class="flex" style="align-items:center;gap:10;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div class="flex" style="align-items:center;gap:10px">
+          <svg width="20" height="20" viewBox="0 0 87.3 78" style="flex-shrink:0">
+            <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L28.7 48H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+            <path d="M43.65 25L28.7 0c-1.35.8-2.5 1.9-3.3 3.3L1.2 43.5c-.8 1.4-1.2 2.95-1.2 4.5h28.7z" fill="#00ac47"/>
+            <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75L85.1 52.5c.8-1.4 1.2-2.95 1.2-4.5H57.6L73.55 76.8z" fill="#ea4335"/>
+            <path d="M43.65 25L58.6 0H28.7L43.65 25z" fill="#00832d"/>
+            <path d="M57.6 48H28.7L13.75 76.8h43.85L57.6 48z" fill="#2684fc"/>
+            <path d="M85.1 47.5L63.9 10.5c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 57.6 48h28.7c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
+          </svg>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:#93c5fd" id="gd-title">Google Drive</div>
+            <div style="font-size:11px;color:var(--sub)" id="gd-sub">Connect to save scores & leaderboard</div>
+          </div>
+        </div>
+        <div class="flex" style="gap:8px;flex-shrink:0">
+          <div class="gd-status-dot" id="gd-dot"></div>
+          <button class="gd-btn" id="gd-btn-main" onclick="toggleDrive()">Connect</button>
+        </div>
+      </div>
+      <div id="gd-actions" class="hidden" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="gd-btn green" onclick="viewLeaderboard()">🏆 Leaderboard</button>
+        <button class="gd-btn green" onclick="viewHistory()">📜 History</button>
+        <button class="gd-btn" onclick="signOutDrive()" style="border-color:rgba(239,68,68,.4);color:#f87171;background:rgba(239,68,68,.1)">Sign Out</button>
+      </div>
+    </div>
+
+    <!-- Theme -->
+    <span class="label">Theme</span>
+    <div class="flex gap-10 mb-24" id="theme-btns"></div>
+
+    <!-- Digits -->
+    <span class="label">Number of Digits</span>
+    <div class="flex gap-10 mb-24" id="digit-btns"></div>
+
+    <!-- Attempts -->
+    <span class="label">Attempts</span>
+    <div class="flex gap-10 mb-16" id="attempt-btns"></div>
+    <div id="slider-row" class="hidden" style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+      <input type="range" min="3" max="20" step="1" value="7" id="attempt-slider" style="flex:1" oninput="updateSlider()">
+      <div style="font-size:28px;font-weight:900;color:var(--accent);min-width:36px;text-align:right;font-family:'JetBrains Mono',monospace" id="slider-val">7</div>
+    </div>
+
+    <!-- Mode -->
+    <span class="label">Game Mode</span>
+    <div class="flex gap-10 mb-24" id="mode-btns"></div>
+
+    <!-- Difficulty -->
+    <span class="label">Difficulty</span>
+    <div class="flex gap-10 mb-24" id="diff-btns"></div>
+
+    <!-- Player name for Drive -->
+    <div id="name-row" class="mb-20">
+      <span class="label">Your Name (for leaderboard)</span>
+      <input type="text" id="player-name" placeholder="Enter your name…" maxlength="20"
+        style="width:100%;background:rgba(124,58,237,.1);border:2px solid rgba(124,58,237,.3);border-radius:14px;padding:14px 18px;font-size:16px;color:var(--text);outline:none;font-family:inherit">
+    </div>
+
+    <!-- Info -->
+    <div class="info-card mb-24" id="mode-info"></div>
+
+    <button class="btn-primary" onclick="startGame()">⚡ Start Game</button>
+
+    <!-- Leaderboard modal placeholder -->
+    <div id="lb-modal" class="hidden" style="margin-top:24px"></div>
+  </div>
+
+  <!-- ════════════════ SCREEN: SECRET SETUP ════════════════ -->
+  <div id="screen-setup" class="hidden fade-in">
+    <div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:16px;font-weight:800;color:var(--primary)" id="setup-title">🙈 Set Your Secret</div>
+      <button class="btn-back" onclick="showHome()">← Back</button>
+    </div>
+    <div class="info-card mb-24" id="setup-info"></div>
+    <input type="number" inputmode="numeric" id="setup-input" class="guess-input mb-16" placeholder="Enter secret…" min="1">
+    <button class="btn-primary" id="setup-submit-btn" onclick="submitSecret()">🔒 Lock In</button>
+  </div>
+
+  <!-- ════════════════ SCREEN: PLAYING ════════════════ -->
+  <div id="screen-playing" class="hidden fade-in">
+    <div class="flex" style="justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:12px;color:var(--sub);letter-spacing:.1em;text-transform:uppercase" id="game-meta"></div>
+      <button class="btn-back" onclick="confirmMenu()">← Menu</button>
+    </div>
+    <div class="card mb-16 text-center" style="font-size:15px;font-weight:700;line-height:1.4" id="game-status"></div>
+
+    <!-- Solo board -->
+    <div id="solo-board" class="mb-16"></div>
+
+    <!-- Versus boards -->
+    <div id="vs-boards" class="flex gap-12 mb-16 hidden"></div>
+
+    <!-- Guess form -->
+    <div id="guess-form">
+      <div style="font-size:12px;color:var(--sub);text-align:center;margin-bottom:10px;letter-spacing:.1em;text-transform:uppercase" id="guess-label">Enter your guess</div>
+      <input type="number" inputmode="numeric" id="guess-input" class="guess-input mb-16" placeholder="?" min="1">
+      <button class="btn-primary" onclick="submitGuess()">🎯 Submit</button>
+    </div>
+    <div id="ai-thinking" class="hidden text-center" style="padding:28px 0;color:var(--sub);font-size:15px;letter-spacing:.08em;animation:blink .8s infinite">🤖 AI is thinking…</div>
+  </div>
+
+  <!-- ════════════════ SCREEN: GAME OVER ════════════════ -->
+  <div id="screen-over" class="hidden fade-in">
+    <div style="text-align:center;padding-top:10px" id="over-content"></div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════ GOOGLE DRIVE SCRIPT ════════════════ -->
+<script>
+// ─── Google Drive OAuth config ───────────────────────────────────────────────
+// IMPORTANT: Replace these with your actual Google Cloud project credentials
+// 1. Go to https://console.cloud.google.com
+// 2. Create a project → Enable "Google Drive API" and "Google Sheets API"
+// 3. Create OAuth 2.0 credentials (Web Application)
+// 4. Add your domain to Authorized JavaScript Origins
+// 5. Paste your Client ID below
+
+const GD_CONFIG = {
+  CLIENT_ID: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com', // ← REPLACE
+  API_KEY: 'YOUR_GOOGLE_API_KEY',                                 // ← REPLACE
+  SCOPES: 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/spreadsheets',
+  DISCOVERY_DOCS: [
+    'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',
+    'https://www.googleapis.com/discovery/v1/apis/sheets/v4/rest'
+  ],
+  FILE_NAME: 'digit-match-data.json',
+  SHEET_NAME: 'Digit Match Leaderboard'
+};
+
+// ─── App State ───────────────────────────────────────────────────────────────
+const THEMES = {
+  cosmic: { bg:'#07071a', card:'#0e0e2a', primary:'#7c3aed', accent:'#f59e0b', text:'#e2e8f0', sub:'#8b8fad', glow:'rgba(124,58,237,0.4)', name:'Cosmic' },
+  neon:   { bg:'#050f0a', card:'#0a1a10', primary:'#00e87a', accent:'#ff0080', text:'#e8fff4', sub:'#6db890', glow:'rgba(0,232,122,0.4)', name:'Neon' },
+  lava:   { bg:'#120500', card:'#1e0800', primary:'#ff5722', accent:'#ffd600', text:'#fff5f0', sub:'#c4785a', glow:'rgba(255,87,34,0.4)', name:'Lava' }
+};
+
+const S = {
+  theme: 'cosmic',
+  maxNum: 99,
+  digits: 2,
+  unlimited: false,
+  maxAttempts: 7,
+  mode: 'solo',   // solo | vs_ai | vs_human
+  difficulty: 'easy',
+  // game
+  phase: 'home',  // home | setup | playing | over
+  p1Secret: null,
+  p2Secret: null,
+  p1Guesses: [],
+  p2Guesses: [],
+  currentPlayer: 'p1',
+  winner: null,
+  aiThinking: false,
+  aiLock: false,
+  playerName: '',
+  // drive
+  driveConnected: false,
+  driveToken: null,
+  driveFileId: null,
+  sheetId: null,
+  gapiReady: false
+};
+
+let T = THEMES[S.theme]; // current theme alias
+
+// ─── Theme ───────────────────────────────────────────────────────────────────
+function applyTheme(key) {
+  S.theme = key;
+  T = THEMES[key];
+  const r = document.documentElement.style;
+  r.setProperty('--bg', T.bg);
+  r.setProperty('--card', T.card);
+  r.setProperty('--primary', T.primary);
+  r.setProperty('--accent', T.accent);
+  r.setProperty('--text', T.text);
+  r.setProperty('--sub', T.sub);
+  r.setProperty('--glow', T.glow);
+  document.body.style.backgroundColor = T.bg;
+  renderThemeBtns();
+  renderDigitBtns();
+  renderAttemptBtns();
+  renderModeBtns();
+  renderDiffBtns();
+}
+
+function renderThemeBtns() {
+  document.getElementById('theme-btns').innerHTML = Object.keys(THEMES).map(k => `
+    <button class="theme-btn ${k === S.theme ? 'active' : ''}"
+      style="border-color:${k===S.theme?THEMES[k].primary:THEMES[k].primary+'50'};
+             color:${THEMES[k].primary};
+             ${k===S.theme?`background:${THEMES[k].primary}20`:''}"
+      onclick="applyTheme('${k}')">${THEMES[k].name}</button>`).join('');
+}
+
+// ─── Config UI ───────────────────────────────────────────────────────────────
+function btnToggle(selected) {
+  return `border:2px solid var(--primary);background:rgba(124,58,237,.2);color:var(--primary)`;
+}
+function btnOff() {
+  return `border:1.5px solid rgba(124,58,237,.25);background:transparent;color:var(--sub)`;
+}
+
+function renderDigitBtns() {
+  document.getElementById('digit-btns').innerHTML = [2,3,4,5].map(d => `
+    <button class="btn-toggle ${d===S.digits?'active':''}" onclick="setDigits(${d})">
+      <span style="font-size:20px;font-weight:900;font-family:'JetBrains Mono',monospace">${d}</span><br>
+      <span style="font-size:10px;opacity:.7">${'9'.repeat(d)}</span>
+    </button>`).join('');
+}
+function setDigits(d) {
+  S.digits = d;
+  S.maxNum = Math.pow(10, d) - 1;
+  renderDigitBtns();
+  updateModeInfo();
+}
+
+function renderAttemptBtns() {
+  document.getElementById('attempt-btns').innerHTML = [`
+    <button class="btn-toggle small ${S.unlimited?'active':''}" onclick="setUnlimited(true)">∞ Unlimited</button>`,
+    `<button class="btn-toggle small ${!S.unlimited?'active':''}" onclick="setUnlimited(false)">🔢 Limited</button>`
+  ].join('');
+  const row = document.getElementById('slider-row');
+  row.style.display = S.unlimited ? 'none' : 'flex';
+  if (!S.unlimited) {
+    document.getElementById('attempt-slider').value = S.maxAttempts;
+    document.getElementById('slider-val').textContent = S.maxAttempts;
+    const pct = (S.maxAttempts - 3) / 17 * 100;
+    document.getElementById('attempt-slider').style.background =
+      `linear-gradient(90deg,${T.primary}90 ${pct}%,${T.primary}25 ${pct}%)`;
+  }
+}
+function setUnlimited(v) { S.unlimited = v; renderAttemptBtns(); }
+function updateSlider() {
+  const v = parseInt(document.getElementById('attempt-slider').value);
+  S.maxAttempts = v;
+  document.getElementById('slider-val').textContent = v;
+  const pct = (v - 3) / 17 * 100;
+  document.getElementById('attempt-slider').style.background =
+    `linear-gradient(90deg,${T.primary}90 ${pct}%,${T.primary}25 ${pct}%)`;
+}
+
+function renderModeBtns() {
+  const modes = [
+    { k:'solo', icon:'🧠', label:'Solo' },
+    { k:'vs_ai', icon:'🤖', label:'vs AI' },
+    { k:'vs_human', icon:'👥', label:'2 Player' }
+  ];
+  document.getElementById('mode-btns').innerHTML = modes.map(m => `
+    <button class="btn-toggle ${m.k===S.mode?'active':''}" onclick="setMode('${m.k}')">
+      ${m.icon}<br>${m.label}
+    </button>`).join('');
+}
+function setMode(m) { S.mode = m; renderModeBtns(); updateModeInfo(); }
+
+function renderDiffBtns() {
+  document.getElementById('diff-btns').innerHTML = [
+    { k:'easy', icon:'😊', label:'Easy', sub:'Shows which digits match' },
+    { k:'hard', icon:'💀', label:'Hard', sub:'Count only' }
+  ].map(d => `
+    <button class="btn-toggle ${d.k===S.difficulty?'active':''}" onclick="setDiff('${d.k}')">
+      ${d.icon}<br><span style="font-size:11px">${d.label}</span><br>
+      <span style="font-size:10px;opacity:.7">${d.sub}</span>
+    </button>`).join('');
+}
+function setDiff(d) { S.difficulty = d; renderDiffBtns(); updateModeInfo(); }
+
+function updateModeInfo() {
+  const easy = S.difficulty === 'easy';
+  const msgs = {
+    solo: easy ? 'Guess the secret number. Matching digits glow up ✨'
+               : 'Guess the secret number. Only match count shown — not which digits. 💀',
+    vs_ai: easy ? 'You and the AI each guess the other\'s secret. Matching digits glow. First to crack it wins!'
+                : 'You and AI take turns. Only match count shown. First to crack it wins! 💀',
+    vs_human: easy ? 'P1 & P2 each set a secret. Matching digits glow. First to crack it wins!'
+                   : 'P1 & P2 each set a secret. Only match count shown. First to crack it wins! 💀'
+  };
+  document.getElementById('mode-info').textContent = msgs[S.mode];
+}
+
+// ─── Game Logic ───────────────────────────────────────────────────────────────
+function countMatches(a, b, digits) {
+  let count = 0;
+  let qa = a, qb = b;
+  for (let i = 0; i < digits; i++) {
+    if (qa % 10 === qb % 10) count++;
+    qa = Math.floor(qa / 10);
+    qb = Math.floor(qb / 10);
+  }
+  return count;
+}
+
+function aiGuess(history, maxNum, digits) {
+  const tried = new Set(history.map(h => h.num));
+  // Smart: eliminate numbers that don't match history
+  for (let n = 1; n <= maxNum; n++) {
+    if (tried.has(n)) continue;
+    let valid = true;
+    for (const h of history) {
+      if (countMatches(n, h.num, digits) !== h.matches) { valid = false; break; }
+    }
+    if (valid) return n;
+  }
+  for (let n = 1; n <= maxNum; n++) if (!tried.has(n)) return n;
+  return 1;
+}
+
+function startGame() {
+  S.playerName = document.getElementById('player-name').value.trim() || 'Player';
+  S.p1Guesses = []; S.p2Guesses = [];
+  S.currentPlayer = 'p1'; S.winner = null; S.aiThinking = false; S.aiLock = false;
+
+  if (S.mode === 'vs_human') {
+    showSetup('p1');
+    return;
+  }
+  if (S.mode === 'vs_ai') {
+    S.p1Secret = Math.floor(Math.random() * S.maxNum) + 1; // AI's number
+    S.p2Secret = Math.floor(Math.random() * S.maxNum) + 1; // Player's number (AI guesses this)
+    // Actually: player guesses p1Secret, AI guesses p2Secret
+    // Redefine: p1 = player, p2 = AI
+    // p2Secret = player's secret (AI needs to crack)
+    // p1Secret = AI's secret (player needs to crack)
+    S.p1Secret = Math.floor(Math.random() * S.maxNum) + 1; // AI's secret
+    S.p2Secret = Math.floor(Math.random() * S.maxNum) + 1; // Player's secret
+  } else {
+    // Solo
+    S.p1Secret = null;
+    S.p2Secret = Math.floor(Math.random() * S.maxNum) + 1;
+  }
+  enterPlaying();
+}
+
+function showSetup(player) {
+  S.phase = 'setup';
+  const isP1 = player === 'p1';
+  document.getElementById('setup-title').textContent = isP1 ? '🙈 P1 — Set Your Secret' : '🙈 P2 — Set Your Secret';
+  document.getElementById('setup-info').textContent = isP1
+    ? `P2, look away! P1: enter a secret number (1–${S.maxNum}) for P2 to guess.`
+    : `P1, look away! P2: enter a secret number (1–${S.maxNum}) for P1 to guess.`;
+  document.getElementById('setup-submit-btn').textContent = isP1 ? '🔒 Lock In → P2\'s Turn' : '🔒 Lock In → Start!';
+  document.getElementById('setup-input').value = '';
+  document.getElementById('setup-input').max = S.maxNum;
+  showScreen('setup');
+  setTimeout(() => document.getElementById('setup-input').focus(), 200);
+  document.getElementById('setup-submit-btn')._player = player;
+}
+
+function submitSecret() {
+  const val = parseInt(document.getElementById('setup-input').value);
+  if (isNaN(val) || val < 1 || val > S.maxNum) { shakeInput('setup-input'); return; }
+  const player = document.getElementById('setup-submit-btn')._player;
+  if (player === 'p1') {
+    S.p1Secret = val; // P1's secret = what P2 guesses
+    showSetup('p2');
+  } else {
+    S.p2Secret = val; // P2's secret = what P1 guesses
+    enterPlaying();
+  }
+}
+
+function enterPlaying() {
+  S.phase = 'playing';
+  document.getElementById('game-meta').textContent =
+    `1–${S.maxNum} · ${S.unlimited ? '∞' : S.maxAttempts + ' tries'}`;
+  buildBoards();
+  updateGameStatus('start');
+  showScreen('playing');
+  setTimeout(() => { if (S.mode !== 'vs_ai' || S.currentPlayer === 'p1') focusGuess(); }, 200);
+  if (S.mode === 'vs_ai' && S.currentPlayer === 'p2') scheduleAI();
+}
+
+function submitGuess() {
+  if (S.phase !== 'playing') return;
+  const input = document.getElementById('guess-input');
+  const val = parseInt(input.value);
+  if (isNaN(val) || val < 1 || val > S.maxNum) { shakeInput('guess-input'); return; }
+  input.value = '';
+
+  const isP1 = S.currentPlayer === 'p1';
+  const isSolo = S.mode === 'solo';
+
+  // P1 always guesses p1Secret (AI's secret in vs_ai) or p2Secret (in solo/vs_human P1 guesses P2's)
+  // Let's keep: P1 guesses S.p1Secret? No — let's normalize:
+  // In SOLO: player = p1, secret = p2Secret
+  // In VS_AI: player = p1, AI = p2. P1 guesses AI's secret (p1Secret). AI guesses player's secret (p2Secret).
+  // In VS_HUMAN: P1 guesses P2's secret (p2Secret). P2 guesses P1's secret (p1Secret).
+  let secret, guessArr, setArr;
+  if (isSolo) {
+    secret = S.p2Secret; guessArr = S.p1Guesses; setArr = a => S.p1Guesses = a;
+  } else if (isP1) {
+    // P1 guesses: in vs_ai→AI's secret (p1Secret), in vs_human→P2's secret (p2Secret)
+    secret = S.mode === 'vs_ai' ? S.p1Secret : S.p2Secret;
+    guessArr = S.p1Guesses; setArr = a => S.p1Guesses = a;
+  } else {
+    // P2 (AI or human): vs_ai→player's secret (p2Secret), vs_human→P1's secret (p1Secret)
+    secret = S.mode === 'vs_ai' ? S.p2Secret : S.p1Secret;
+    guessArr = S.p2Guesses; setArr = a => S.p2Guesses = a;
+  }
+
+  const matches = countMatches(val, secret, S.digits);
+  const newGuesses = [...guessArr, { num: val, matches }];
+  setArr(newGuesses);
+  renderBoards();
+
+  if (matches === S.digits) {
+    endGame(isSolo ? 'p1' : S.currentPlayer);
+    return;
+  }
+
+  const limitHit = !S.unlimited && newGuesses.length >= S.maxAttempts;
+  if (!isSolo) {
+    const otherGuesses = isP1 ? S.p2Guesses : S.p1Guesses;
+    const otherLimit = !S.unlimited && otherGuesses.length >= S.maxAttempts;
+    if (limitHit && otherLimit) { endGame('draw'); return; }
+  } else if (limitHit) {
+    endGame('draw'); return;
+  }
+
+  if (!isSolo && limitHit) {
+    // Switch player even if at limit — other player still has turns
+  }
+
+  // Switch turn
+  if (!isSolo) {
+    S.currentPlayer = isP1 ? 'p2' : 'p1';
+    updateGameStatus('switch');
+    if (S.mode === 'vs_ai' && S.currentPlayer === 'p2') scheduleAI();
+    else focusGuess();
+  } else {
+    updateGameStatus('solo', matches);
+  }
+}
+
+function scheduleAI() {
+  if (S.aiLock) return;
+  S.aiLock = true;
+  document.getElementById('ai-thinking').classList.remove('hidden');
+  document.getElementById('guess-form').classList.add('hidden');
+  setTimeout(() => {
+    if (S.phase !== 'playing') { S.aiLock = false; return; }
+    const guess = aiGuess(S.p2Guesses, S.maxNum, S.digits);
+    const secret = S.p2Secret;
+    const matches = countMatches(guess, secret, S.digits);
+    S.p2Guesses = [...S.p2Guesses, { num: guess, matches }];
+    S.aiLock = false;
+    document.getElementById('ai-thinking').classList.add('hidden');
+    document.getElementById('guess-form').classList.remove('hidden');
+    renderBoards();
+    if (matches === S.digits) { endGame('p2'); return; }
+    if (!S.unlimited && S.p2Guesses.length >= S.maxAttempts && !S.unlimited && S.p1Guesses.length >= S.maxAttempts) {
+      endGame('draw'); return;
+    }
+    S.currentPlayer = 'p1';
+    updateGameStatus('switch');
+    focusGuess();
+  }, 350 + Math.random() * 250);
+}
+
+// ─── End Game ─────────────────────────────────────────────────────────────────
+async function endGame(winner) {
+  S.phase = 'over';
+  S.winner = winner;
+  buildOverScreen();
+  showScreen('over');
+  // Save to Drive if connected
+  if (S.driveConnected) {
+    await saveGameResult(winner);
+  }
+}
+
+// ─── Boards ──────────────────────────────────────────────────────────────────
+function buildBoards() {
+  if (S.mode === 'solo') {
+    document.getElementById('solo-board').innerHTML = buildPlayerPanel('p1', 'Your Guesses', T.primary, S.p1Guesses, S.p2Secret, true, false);
+    document.getElementById('vs-boards').classList.add('hidden');
+    document.getElementById('solo-board').classList.remove('hidden');
+  } else {
+    const p1name = S.mode === 'vs_ai' ? 'You' : 'P1';
+    const p2name = S.mode === 'vs_ai' ? 'AI' : 'P2';
+    document.getElementById('vs-boards').innerHTML =
+      buildPlayerPanel('p1', p1name, T.primary, S.p1Guesses, S.mode==='vs_ai'?S.p1Secret:S.p2Secret, S.currentPlayer==='p1', false) +
+      buildPlayerPanel('p2', p2name, '#f87171', S.p2Guesses, S.mode==='vs_ai'?S.p2Secret:S.p1Secret, S.currentPlayer==='p2', S.mode==='vs_ai'&&S.aiThinking);
+    document.getElementById('solo-board').classList.add('hidden');
+    document.getElementById('vs-boards').classList.remove('hidden');
+  }
+}
+
+function buildPlayerPanel(id, name, color, guesses, secret, isActive, isAI) {
+  const progress = S.unlimited ? 0 : Math.min(guesses.length / S.maxAttempts, 1);
+  const pColor = progress > .75 ? '#ef4444' : progress > .5 ? T.accent : color;
+  const rows = guesses.length === 0
+    ? '<div class="empty-state">No guesses yet</div>'
+    : guesses.map(g => buildAttemptRow(g, secret)).join('');
+  return `<div class="player-panel ${isActive ? 'active' : ''}" id="panel-${id}" style="border-color:${isActive?color+'55':'rgba(124,58,237,.18)'}">
+    <div class="player-panel-header">
+      <span class="player-name" style="color:${color}">${name}${isActive&&!isAI?'<span style="margin-left:6px;font-size:9px;animation:blink 1s infinite;color:'+color+'">▶</span>':''}${isAI?'<span style="margin-left:6px;font-size:9px;animation:blink .6s infinite;color:'+color+'">…</span>':''}</span>
+      <span style="font-size:11px;color:var(--sub)">${guesses.length}${S.unlimited?'':'/'+S.maxAttempts}</span>
+    </div>
+    ${!S.unlimited ? `<div class="progress-bar-track"><div class="progress-bar-fill" style="width:${progress*100}%;background:${pColor}"></div></div>` : ''}
+    <div class="attempts-scroll">${rows}</div>
+  </div>`;
+}
+
+function buildAttemptRow(attempt, secret) {
+  const numStr = String(attempt.num).padStart(S.digits, '0');
+  const secStr = String(secret).padStart(S.digits, '0');
+  const easy = S.difficulty === 'easy';
+  const scale = S.digits > 4 ? .7 : S.digits > 3 ? .82 : .9;
+  const cells = numStr.split('').map((ch, i) => {
+    const matched = easy && ch === secStr[i];
+    return `<div class="attempt-cell ${matched ? 'matched' : ''}">${ch}</div>`;
+  }).join('');
+  const full = attempt.matches === S.digits;
+  return `<div class="attempt-row">
+    <div class="attempt-num" style="transform:scale(${scale});transform-origin:left center">${cells}</div>
+    <div class="match-badge ${full ? 'full' : ''}">${attempt.matches}/${S.digits}</div>
+  </div>`;
+}
+
+function renderBoards() {
+  if (S.mode === 'solo') {
+    document.getElementById('solo-board').innerHTML =
+      buildPlayerPanel('p1', 'Your Guesses', T.primary, S.p1Guesses, S.p2Secret, true, false);
+  } else {
+    const p1name = S.mode === 'vs_ai' ? 'You' : 'P1';
+    const p2name = S.mode === 'vs_ai' ? 'AI' : 'P2';
+    document.getElementById('vs-boards').innerHTML =
+      buildPlayerPanel('p1', p1name, T.primary, S.p1Guesses, S.mode==='vs_ai'?S.p1Secret:S.p2Secret, S.currentPlayer==='p1', false) +
+      buildPlayerPanel('p2', p2name, '#f87171', S.p2Guesses, S.mode==='vs_ai'?S.p2Secret:S.p1Secret, S.currentPlayer==='p2', S.aiThinking);
+  }
+}
+
+function updateGameStatus(reason, matches) {
+  const el = document.getElementById('game-status');
+  const isSolo = S.mode === 'solo';
+  const vsAI = S.mode === 'vs_ai';
+  const vsH = S.mode === 'vs_human';
+
+  if (reason === 'start') {
+    el.textContent = isSolo ? `Guess the secret number (1–${S.maxNum})!`
+      : vsAI ? `Your turn — guess the AI's secret!`
+      : `P1's turn — guess P2's number!`;
+  } else if (reason === 'switch') {
+    el.textContent = S.currentPlayer === 'p1'
+      ? (vsAI ? 'Your turn!' : 'P1\'s turn!')
+      : (vsAI ? '🤖 AI is thinking…' : 'P2\'s turn!');
+  } else if (reason === 'solo') {
+    const left = S.unlimited ? null : S.maxAttempts - S.p1Guesses.length;
+    el.textContent = `${matches}/${S.digits} matched!${left !== null ? ` ${left} left.` : ' Keep going!'}`;
+  }
+
+  // Show/hide guess form vs AI thinking
+  const showForm = S.currentPlayer === 'p1' || vsH;
+  document.getElementById('guess-form').classList.toggle('hidden', !showForm && !isSolo);
+  const guessLabel = document.getElementById('guess-label');
+  if (vsAI) guessLabel.textContent = `You — guess AI's number (1–${S.maxNum})`;
+  else if (vsH) guessLabel.textContent = `${S.currentPlayer === 'p1' ? 'P1' : 'P2'} — enter guess`;
+  else guessLabel.textContent = `Enter your guess (1–${S.maxNum})`;
+}
+
+function focusGuess() {
+  setTimeout(() => document.getElementById('guess-input').focus(), 150);
+}
+
+// ─── Game Over Screen ─────────────────────────────────────────────────────────
+function buildOverScreen() {
+  const w = S.winner;
+  const isSolo = S.mode === 'solo';
+  const vsAI = S.mode === 'vs_ai';
+  const isWin = w === 'p1' || (w === 'p2' && !vsAI && S.mode === 'vs_human');
+  const isPlayerWin = w === 'p1';
+  const isAIWin = w === 'p2' && vsAI;
+  const isDraw = w === 'draw';
+  const isFail = isSolo && isDraw;
+
+  const emoji = isPlayerWin ? '🏆' : isAIWin ? '🤖' : isDraw ? (isSolo ? '💥' : '🤝') : '🥇';
+  const title = isSolo
+    ? (isDraw ? 'OUT OF TRIES!' : 'SUCCESS!')
+    : w === 'p1' ? (vsAI ? 'YOU WIN!' : 'P1 WINS!') : w === 'p2' ? (vsAI ? 'AI WINS!' : 'P2 WINS!') : 'DRAW!';
+  const sub = (isFail || isAIWin) ? '— Better luck next time —' : '— Nicely done! —';
+  const accentColor = (isFail || isAIWin) ? '#ef4444' : T.accent;
+
+  const rings = !isFail && !isAIWin ? [0,1,2].map(i =>
+    `<div style="position:absolute;inset:-10px;border-radius:50%;border:2px solid ${T.accent};animation:winRing 1.2s ease-out ${i*.3}s infinite;pointer-events:none"></div>`
+  ).join('') : '';
+
+  // Boards reveal
+  const p1Secret = S.mode === 'solo' || S.mode === 'vs_human' ? null : S.p1Secret;
+  const p2Secret = S.p2Secret;
+  const p1Guesses = S.p1Guesses.length;
+  const p2Guesses = S.p2Guesses.length;
+  const p1Name = vsAI ? 'You' : 'P1';
+  const p2Name = vsAI ? 'AI' : 'P2';
+
+  const soloSummary = `<div style="display:flex;justify-content:center;align-items:center;gap:8px">
+    <span style="font-size:44px;font-weight:900;color:${accentColor};line-height:1;font-family:'JetBrains Mono',monospace">${p1Guesses}</span>
+    <div style="text-align:left">
+      <div style="font-size:13px;color:var(--text);font-weight:700">guess${p1Guesses!==1?'es':''}</div>
+      <div style="font-size:11px;color:var(--sub)">to ${isFail?'exhaust all tries':'crack the code'}</div>
+    </div></div>`;
+
+  const vsSummary = `<div style="display:flex;gap:12px;justify-content:center">
+    <div style="flex:1;background:${T.primary}15;border-radius:14px;padding:12px 10px;text-align:center">
+      <div style="font-size:11px;color:${T.primary};text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">${p1Name}</div>
+      <div style="font-size:36px;font-weight:900;color:${T.primary};line-height:1;font-family:'JetBrains Mono',monospace">${p1Guesses}</div>
+      <div style="font-size:11px;color:var(--sub);margin-top:2px">guess${p1Guesses!==1?'es':''}</div>
+    </div>
+    <div style="flex:1;background:#f8717115;border-radius:14px;padding:12px 10px;text-align:center">
+      <div style="font-size:11px;color:#f87171;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px">${p2Name}</div>
+      <div style="font-size:36px;font-weight:900;color:#f87171;line-height:1;font-family:'JetBrains Mono',monospace">${p2Guesses}</div>
+      <div style="font-size:11px;color:var(--sub);margin-top:2px">guess${p2Guesses!==1?'es':''}</div>
+    </div></div>`;
+
+  const secretReveal = `<div style="display:flex;gap:12px;justify-content:center;margin-bottom:20px;flex-wrap:wrap">
+    ${S.mode!=='solo'?`<div style="background:${T.primary}12;border:1.5px solid ${T.primary}35;border-radius:18px;padding:14px 16px;flex:1;min-width:100px;text-align:center">
+      <div style="font-size:10px;color:var(--sub);margin-bottom:8px;text-transform:uppercase;letter-spacing:.14em">${p1Name}'s secret</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:900;color:${T.primary}">${String(S.mode==='vs_ai'?S.p2Secret:S.p1Secret).padStart(S.digits,'0')}</div></div>`:''}
+    <div style="background:#f8717115;border:1.5px solid #f8717135;border-radius:18px;padding:14px 16px;flex:1;min-width:100px;text-align:center">
+      <div style="font-size:10px;color:var(--sub);margin-bottom:8px;text-transform:uppercase;letter-spacing:.14em">${S.mode!=='solo'?`${p2Name}'s secret`:'The secret was'}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:900;color:#f87171">${String(S.p2Secret).padStart(S.digits,'0')}</div></div>
+  </div>`;
+
+  document.getElementById('over-content').innerHTML = `
+    <div style="position:relative;display:inline-block;margin-bottom:4px">
+      ${rings}
+      <div style="font-size:72px;animation:${isFail||isAIWin?'failShake .7s ease':'successFlash .8s ease'}">${emoji}</div>
+    </div>
+    <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;margin:10px 0 4px;letter-spacing:.08em;color:${accentColor};text-shadow:0 0 24px ${accentColor}88;animation:${isFail||isAIWin?'none':'successFlash .9s ease .1s both'}">${title}</div>
+    <div style="font-size:13px;color:${accentColor}cc;letter-spacing:.1em;margin-bottom:20px;font-weight:600">${sub}</div>
+    <div style="background:${isFail||isAIWin?'rgba(239,68,68,.1)':'rgba(245,158,11,.1)'};border:1.5px solid ${isFail||isAIWin?'rgba(239,68,68,.3)':'rgba(245,158,11,.3)'};border-radius:20px;padding:16px 20px;margin-bottom:20px;animation:countUp .6s ease .3s both">
+      <div style="font-size:11px;color:var(--sub);text-transform:uppercase;letter-spacing:.16em;margin-bottom:12px">Game Summary</div>
+      ${isSolo ? soloSummary : vsSummary}
+    </div>
+    ${secretReveal}
+    ${S.driveConnected ? `<div style="font-size:13px;color:var(--sub);margin-bottom:16px;font-style:italic" id="save-status">💾 Saving to Google Drive…</div>` : ''}
+    <button class="btn-primary" onclick="showHome()">↩ Play Again</button>
+  `;
+}
+
+// ─── Screen Management ────────────────────────────────────────────────────────
+function showScreen(name) {
+  ['home','setup','playing','over'].forEach(s => {
+    const el = document.getElementById(`screen-${s}`);
+    el.classList.add('hidden');
+  });
+  document.getElementById(`screen-${name}`).classList.remove('hidden');
+}
+
+function showHome() {
+  S.phase = 'home';
+  showScreen('home');
+  document.getElementById('lb-modal').classList.add('hidden');
+}
+
+function confirmMenu() {
+  if (confirm('Leave current game and go back to menu?')) showHome();
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+function shakeInput(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('shaking');
+  void el.offsetWidth;
+  el.classList.add('shaking');
+  setTimeout(() => el.classList.remove('shaking'), 450);
+}
+
+let notifTimer;
+function showNotif(msg, type='info') {
+  const el = document.getElementById('notification');
+  el.className = `show ${type}`;
+  el.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</span><span>${msg}</span>`;
+  clearTimeout(notifTimer);
+  notifTimer = setTimeout(() => el.className = '', 3500);
+}
+
+function spawnParticles(color, count = 18) {
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.cssText = `left:${window.innerWidth/2+(Math.random()-.5)*200}px;top:${window.innerHeight*.4+(Math.random()-.5)*160}px;background:${color}`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1500);
+  }
+}
+
+// ─── Google Drive Integration ─────────────────────────────────────────────────
+let gapiClient = null;
+let tokenClient = null;
+
+// Load Google API
+function loadGoogleAPI() {
+  return new Promise((resolve, reject) => {
+    if (window.gapi) { resolve(); return; }
+    const script = document.createElement('script');
+    script.src = 'https://apis.google.com/js/api.js';
+    script.onload = () => {
+      gapi.load('client', async () => {
+        try {
+          await gapi.client.init({
+            apiKey: GD_CONFIG.API_KEY,
+            discoveryDocs: GD_CONFIG.DISCOVERY_DOCS
+          });
+          gapiClient = gapi.client;
+          resolve();
+        } catch(e) { reject(e); }
+      });
+    };
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+function loadGISScript() {
+  return new Promise((resolve, reject) => {
+    if (window.google?.accounts) { resolve(); return; }
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+async function toggleDrive() {
+  if (S.driveConnected) { signOutDrive(); return; }
+  const btn = document.getElementById('gd-btn-main');
+  btn.innerHTML = '<span class="loader"></span>';
+  btn.disabled = true;
+
+  // Demo mode if no real credentials configured
+  if (GD_CONFIG.CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') {
+    showDemoMode();
+    btn.textContent = 'Connect';
+    btn.disabled = false;
+    return;
+  }
+
+  try {
+    await Promise.all([loadGoogleAPI(), loadGISScript()]);
+
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GD_CONFIG.CLIENT_ID,
+      scope: GD_CONFIG.SCOPES,
+      callback: async (resp) => {
+        if (resp.error) { showNotif('Drive connection failed: ' + resp.error, 'error'); return; }
+        S.driveToken = resp.access_token;
+        await onDriveConnected();
+      }
+    });
+    tokenClient.requestAccessToken({ prompt: '' });
+  } catch(e) {
+    showNotif('Google API failed to load. Check your credentials.', 'error');
+    btn.textContent = 'Connect';
+    btn.disabled = false;
+  }
+}
+
+async function onDriveConnected() {
+  S.driveConnected = true;
+  // Try to find/create our data file in appDataFolder
+  try {
+    await findOrCreateDataFile();
+    updateDriveUI(true, 'Connected — scores will be saved!');
+    showNotif('Google Drive connected! 🎉', 'success');
+    spawnParticles('#34d399', 12);
+  } catch(e) {
+    S.driveConnected = false;
+    updateDriveUI(false);
+    showNotif('Drive connected but storage failed. Playing offline.', 'error');
+  }
+}
+
+function showDemoMode() {
+  // Demo: simulate drive connection with localStorage
+  S.driveConnected = true;
+  S.driveFileId = 'demo';
+  updateDriveUI(true, '📦 Demo mode — scores saved locally');
+  showNotif('Demo mode active! (No credentials set — using local storage)', 'info');
+  spawnParticles('#34d399', 8);
+}
+
+function updateDriveUI(connected, subtitle) {
+  const bar = document.getElementById('gd-bar');
+  const dot = document.getElementById('gd-dot');
+  const btn = document.getElementById('gd-btn-main');
+  const title = document.getElementById('gd-title');
+  const sub = document.getElementById('gd-sub');
+  const actions = document.getElementById('gd-actions');
+
+  if (connected) {
+    bar.classList.add('gd-connected');
+    dot.classList.add('connected');
+    btn.textContent = 'Connected ✓';
+    btn.classList.add('green');
+    btn.disabled = true;
+    title.textContent = 'Google Drive';
+    sub.textContent = subtitle || 'Connected — scores saved automatically';
+    actions.classList.remove('hidden');
+    actions.style.display = 'flex';
+  } else {
+    bar.classList.remove('gd-connected');
+    dot.classList.remove('connected');
+    btn.textContent = 'Connect';
+    btn.classList.remove('green');
+    btn.disabled = false;
+    actions.classList.add('hidden');
+  }
+}
+
+async function findOrCreateDataFile() {
+  if (S.driveFileId === 'demo') return;
+  const resp = await gapiClient.drive.files.list({
+    spaces: 'appDataFolder',
+    fields: 'files(id, name)',
+    q: `name='${GD_CONFIG.FILE_NAME}'`
+  });
+  if (resp.result.files.length > 0) {
+    S.driveFileId = resp.result.files[0].id;
+  } else {
+    const create = await gapiClient.drive.files.create({
+      resource: { name: GD_CONFIG.FILE_NAME, parents: ['appDataFolder'] },
+      fields: 'id'
+    });
+    S.driveFileId = create.result.id;
+    await saveFile({ games: [], leaderboard: [] });
+  }
+}
+
+async function loadFile() {
+  if (S.driveFileId === 'demo') {
+    const raw = localStorage.getItem('digit-match-data');
+    return raw ? JSON.parse(raw) : { games: [], leaderboard: [] };
+  }
+  const resp = await gapiClient.drive.files.get({
+    fileId: S.driveFileId, alt: 'media'
+  });
+  return resp.result;
+}
+
+async function saveFile(data) {
+  if (S.driveFileId === 'demo') {
+    localStorage.setItem('digit-match-data', JSON.stringify(data));
+    return;
+  }
+  await gapiClient.request({
+    path: `/upload/drive/v3/files/${S.driveFileId}`,
+    method: 'PATCH',
+    params: { uploadType: 'media' },
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+}
+
+async function saveGameResult(winner) {
+  try {
+    const data = await loadFile();
+    const p1Guesses = S.p1Guesses.length;
+    const record = {
+      id: Date.now(),
+      date: new Date().toISOString(),
+      player: S.playerName,
+      mode: S.mode,
+      difficulty: S.difficulty,
+      digits: S.digits,
+      maxNum: S.maxNum,
+      winner,
+      p1Guesses,
+      p2Guesses: S.p2Guesses.length,
+      secret: S.p2Secret
+    };
+    data.games = [record, ...(data.games || [])].slice(0, 100); // keep last 100
+
+    // Update leaderboard (best = fewest guesses to win)
+    if ((winner === 'p1' || (winner !== 'p2' && winner !== 'draw')) && S.playerName) {
+      const lbEntry = {
+        name: S.playerName,
+        guesses: p1Guesses,
+        digits: S.digits,
+        date: record.date,
+        mode: S.mode
+      };
+      data.leaderboard = updateLeaderboard(data.leaderboard || [], lbEntry);
+    }
+
+    await saveFile(data);
+    const saveEl = document.getElementById('save-status');
+    if (saveEl) saveEl.textContent = '✅ Saved to Google Drive!';
+  } catch(e) {
+    const saveEl = document.getElementById('save-status');
+    if (saveEl) saveEl.textContent = '⚠️ Could not save (offline?)';
+  }
+}
+
+function updateLeaderboard(lb, entry) {
+  // Remove old entry for same player+digits
+  lb = lb.filter(e => !(e.name === entry.name && e.digits === entry.digits));
+  lb.push(entry);
+  lb.sort((a, b) => a.guesses - b.guesses);
+  return lb.slice(0, 50);
+}
+
+async function viewLeaderboard() {
+  const lbModal = document.getElementById('lb-modal');
+  lbModal.innerHTML = '<div style="text-align:center;padding:20px;color:var(--sub)">Loading…</div>';
+  lbModal.classList.remove('hidden');
+
+  try {
+    const data = await loadFile();
+    const lb = (data.leaderboard || []).filter(e => e.digits === S.digits);
+
+    if (lb.length === 0) {
+      lbModal.innerHTML = `<div class="card text-center" style="color:var(--sub)">No scores yet for ${S.digits}-digit mode. Play a game!</div>
+        <button class="btn-back" style="width:100%;margin-top:10px" onclick="document.getElementById('lb-modal').classList.add('hidden')">Close</button>`;
+      return;
+    }
+
+    const medals = ['🥇','🥈','🥉'];
+    const rows = lb.slice(0,10).map((e, i) => `
+      <div class="lb-entry" style="animation-delay:${i*.05}s">
+        <div class="lb-rank">${medals[i] || `#${i+1}`}</div>
+        <div class="lb-info">
+          <div class="lb-name">${escHtml(e.name)}</div>
+          <div class="lb-meta">${e.digits}-digit · ${e.mode} · ${new Date(e.date).toLocaleDateString()}</div>
+        </div>
+        <div class="lb-score">${e.guesses}</div>
+      </div>`).join('');
+
+    lbModal.innerHTML = `
+      <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent);margin-bottom:16px;text-align:center">
+        🏆 Leaderboard — ${S.digits}-digit
+      </div>
+      <div style="font-size:11px;color:var(--sub);text-align:center;margin-bottom:14px;text-transform:uppercase;letter-spacing:.1em">Fewest guesses wins</div>
+      ${rows}
+      <button class="btn-back" style="width:100%;margin-top:12px" onclick="document.getElementById('lb-modal').classList.add('hidden')">Close</button>
+    `;
+  } catch(e) {
+    lbModal.innerHTML = `<div class="card text-center" style="color:#ef4444">Failed to load leaderboard</div>
+      <button class="btn-back" style="width:100%;margin-top:10px" onclick="document.getElementById('lb-modal').classList.add('hidden')">Close</button>`;
+  }
+}
+
+async function viewHistory() {
+  const lbModal = document.getElementById('lb-modal');
+  lbModal.innerHTML = '<div style="text-align:center;padding:20px;color:var(--sub)">Loading…</div>';
+  lbModal.classList.remove('hidden');
+
+  try {
+    const data = await loadFile();
+    const games = (data.games || []).slice(0, 10);
+
+    if (games.length === 0) {
+      lbModal.innerHTML = `<div class="card text-center" style="color:var(--sub)">No game history yet. Play some games!</div>
+        <button class="btn-back" style="width:100%;margin-top:10px" onclick="document.getElementById('lb-modal').classList.add('hidden')">Close</button>`;
+      return;
+    }
+
+    const rows = games.map((g, i) => {
+      const winText = g.winner === 'p1' ? '🏆 Win' : g.winner === 'draw' ? '🤝 Draw' : '💥 Loss';
+      const winColor = g.winner === 'p1' ? '#34d399' : g.winner === 'draw' ? '#94a3b8' : '#f87171';
+      return `<div class="lb-entry" style="animation-delay:${i*.05}s">
+        <div style="font-size:28px">${winText.split(' ')[0]}</div>
+        <div class="lb-info">
+          <div class="lb-name" style="color:${winColor}">${winText.split(' ')[1]}</div>
+          <div class="lb-meta">${g.digits}-digit · ${g.mode} · ${g.p1Guesses} guess${g.p1Guesses!==1?'es':''}</div>
+          <div class="lb-meta">${new Date(g.date).toLocaleDateString()}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    lbModal.innerHTML = `
+      <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent);margin-bottom:16px;text-align:center">📜 Recent Games</div>
+      ${rows}
+      <button class="btn-back" style="width:100%;margin-top:12px" onclick="document.getElementById('lb-modal').classList.add('hidden')">Close</button>
+    `;
+  } catch(e) {
+    lbModal.innerHTML = `<div class="card text-center" style="color:#ef4444">Failed to load history</div>
+      <button class="btn-back" style="width:100%;margin-top:10px" onclick="document.getElementById('lb-modal').classList.add('hidden')">Close</button>`;
+  }
+}
+
+function signOutDrive() {
+  if (window.google?.accounts?.oauth2 && S.driveToken) {
+    google.accounts.oauth2.revoke(S.driveToken);
+  }
+  S.driveConnected = false;
+  S.driveToken = null;
+  S.driveFileId = null;
+  updateDriveUI(false);
+  showNotif('Signed out of Google Drive', 'info');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── Keyboard Shortcuts ────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (S.phase === 'playing') submitGuess();
+    else if (S.phase === 'setup') submitSecret();
+  }
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+function init() {
+  applyTheme('cosmic');
+  renderThemeBtns();
+  renderDigitBtns();
+  renderAttemptBtns();
+  renderModeBtns();
+  renderDiffBtns();
+  updateModeInfo();
+  showScreen('home');
+}
+
+init();
+</script>
+</body>
+</html>
